@@ -1,5 +1,5 @@
 # Docker Compose configuration for Bybit Volume Scanner
-version: '3.8'
+version: "3.8"
 
 services:
   bybit-scanner:

@@ -85,14 +85,14 @@ docker run -d \
 Pull from GitHub Container Registry:
 
 ```bash
-docker pull ghcr.io/tchekda/hockeypen-stats/bybit-scanner:latest
+docker pull ghcr.io/tchekda/bybit-crypto-scanner/bybit-scanner:latest
 
 docker run -d \
   --name bybit-scanner \
   -p 5000:5000 \
   -v $(pwd)/data:/app/data \
   --restart unless-stopped \
-  ghcr.io/tchekda/hockeypen-stats/bybit-scanner:latest
+  ghcr.io/tchekda/bybit-crypto-scanner/bybit-scanner:latest
 ```
 
 ## Configuration
@@ -206,6 +206,7 @@ docker inspect --format='{{.State.Health.Status}}' bybit-scanner
 ### Container Won't Start
 
 Check logs:
+
 ```bash
 docker logs bybit-scanner
 ```
@@ -213,6 +214,7 @@ docker logs bybit-scanner
 ### Permission Issues with Volume
 
 Ensure the data directory is writable:
+
 ```bash
 mkdir -p data
 chmod 755 data
@@ -221,6 +223,7 @@ chmod 755 data
 ### Port Already in Use
 
 Change the port mapping:
+
 ```bash
 docker run -d -p 5001:5000 ...  # Use port 5001 instead
 ```
@@ -228,6 +231,7 @@ docker run -d -p 5001:5000 ...  # Use port 5001 instead
 ### Container Keeps Restarting
 
 Check health status and logs:
+
 ```bash
 docker ps -a
 docker logs bybit-scanner
@@ -284,17 +288,17 @@ spec:
         app: bybit-scanner
     spec:
       containers:
-      - name: bybit-scanner
-        image: ghcr.io/tchekda/hockeypen-stats/bybit-scanner:latest
-        ports:
-        - containerPort: 5000
-        volumeMounts:
-        - name: data
-          mountPath: /app/data
+        - name: bybit-scanner
+          image: ghcr.io/tchekda/bybit-crypto-scanner/bybit-scanner:latest
+          ports:
+            - containerPort: 5000
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
       volumes:
-      - name: data
-        persistentVolumeClaim:
-          claimName: bybit-scanner-pvc
+        - name: data
+          persistentVolumeClaim:
+            claimName: bybit-scanner-pvc
 ---
 apiVersion: v1
 kind: Service
@@ -304,8 +308,8 @@ spec:
   selector:
     app: bybit-scanner
   ports:
-  - port: 5000
-    targetPort: 5000
+    - port: 5000
+      targetPort: 5000
   type: LoadBalancer
 ```
 
@@ -337,7 +341,7 @@ Pull the appropriate image for your platform:
 
 ```bash
 # Docker automatically selects the correct architecture
-docker pull ghcr.io/tchekda/hockeypen-stats/bybit-scanner:latest
+docker pull ghcr.io/tchekda/bybit-crypto-scanner/bybit-scanner:latest
 ```
 
 ## Security Considerations

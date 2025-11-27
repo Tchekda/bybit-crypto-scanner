@@ -125,11 +125,13 @@ The web interface provides:
 ### Option 2: Docker (Recommended for Production)
 
 **Using Docker Compose:**
+
 ```bash
 docker-compose up -d
 ```
 
 **Using Docker directly:**
+
 ```bash
 # Build the image
 docker build -t bybit-scanner .
@@ -143,17 +145,19 @@ docker run -d \
 ```
 
 **Using pre-built image from GitHub Container Registry:**
+
 ```bash
 docker run -d \
   -p 5000:5000 \
   -v $(pwd)/data:/app/data \
   --name bybit-scanner \
-  ghcr.io/tchekda/hockeypen-stats/bybit-scanner:latest
+  ghcr.io/tchekda/bybit-crypto-scanner/bybit-scanner:latest
 ```
 
 Then access the web interface at `http://localhost:5000`
 
 **Docker Benefits:**
+
 - 📦 No need to install Python or dependencies
 - 🔄 Easy updates and rollbacks
 - 💾 Persistent data via volume mounts
@@ -246,6 +250,7 @@ Changes take effect on the next scan cycle.
 ### Building the Image
 
 Build locally:
+
 ```bash
 docker build -t bybit-scanner .
 ```
@@ -292,14 +297,14 @@ Images are automatically built and published to GitHub Container Registry on eve
 
 ```bash
 # Pull the latest image
-docker pull ghcr.io/tchekda/hockeypen-stats/bybit-scanner:latest
+docker pull ghcr.io/tchekda/bybit-crypto-scanner/bybit-scanner:latest
 
 # Run it
 docker run -d \
   -p 5000:5000 \
   -v $(pwd)/data:/app/data \
   --name bybit-scanner \
-  ghcr.io/tchekda/hockeypen-stats/bybit-scanner:latest
+  ghcr.io/tchekda/bybit-crypto-scanner/bybit-scanner:latest
 ```
 
 ### Docker Volume Persistence
@@ -317,6 +322,7 @@ mkdir -p data
 ### GitHub Actions CI/CD
 
 The project includes a GitHub Actions workflow that:
+
 - ✅ Builds the Docker image on every push
 - ✅ Pushes to GitHub Container Registry
 - ✅ Supports multi-architecture (amd64, arm64)
@@ -324,6 +330,7 @@ The project includes a GitHub Actions workflow that:
 - ✅ Creates artifact attestations for security
 
 The workflow is triggered on:
+
 - Push to `main` branch
 - Pull requests
 - Version tags (e.g., `v1.0.0`)
