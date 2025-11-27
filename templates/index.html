@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bybit Volume Scanner</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.running {
+            background: #10b981;
+        }
+
+        .status-indicator.stopped {
+            background: #ef4444;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .config-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #555;
+            font-size: 0.9em;
+        }
+
+        input,
+        select {
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #d97706;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .stat-item {
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .alerts-container {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .alert-item {
+            padding: 20px;
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%);
+            border-left: 4px solid #ef4444;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .alert-symbol {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #dc2626;
+        }
+
+        .alert-change {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #ef4444;
+        }
+
+        .alert-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .alert-time {
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 10px;
+        }
+
+        .symbols-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .symbols-table th {
+            background: #f9fafb;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .symbols-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .symbols-table tr:hover {
+            background: #f9fafb;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-style: italic;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .message.success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .message.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f4f6;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Bybit Volume Scanner</h1>
+            <p class="subtitle">Real-time cryptocurrency volume spike detection and monitoring</p>
+        </header>
+
+        <div class="dashboard">
+            <!-- Status Card -->
+            <div class="card">
+                <h2>
+                    <span class="status-indicator" id="statusIndicator"></span>
+                    Scanner Status
+                </h2>
+                <div class="stat-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">Status</div>
+                        <div class="stat-value" id="scannerStatus">Stopped</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Total Alerts</div>
+                        <div class="stat-value" id="alertsCount">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Tracked Symbols</div>
+                        <div class="stat-value" id="trackedSymbols">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Last Scan</div>
+                        <div class="stat-value" id="lastScan" style="font-size: 1em;">Never</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration Card -->
+            <div class="card">
+                <h2>⚙️ Configuration</h2>
+                <div id="configMessage"></div>
+                <form class="config-form" id="configForm">
+                    <div class="form-group">
+                        <label for="category">Market Category</label>
+                        <select id="category">
+                            <option value="spot">Spot</option>
+                            <option value="linear">Linear (Perpetual)</option>
+                            <option value="inverse">Inverse</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="timeframe">Timeframe (hours)</label>
+                        <input type="number" id="timeframe" min="1" value="24" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="threshold">Volume Threshold (%)</label>
+                        <input type="number" id="threshold" min="0" step="0.1" value="30" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="interval">Check Interval (seconds)</label>
+                        <input type="number" id="interval" min="60" value="300" />
+                    </div>
+
+                    <div class="button-group">
+                        <button type="button" class="btn-primary" onclick="startScanner()">Start</button>
+                        <button type="button" class="btn-danger" onclick="stopScanner()">Stop</button>
+                    </div>
+                    <button type="button" class="btn-warning" onclick="resetData()">Reset Data</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Alerts Section -->
+        <div class="card">
+            <h2>🚨 Volume Spike Alerts</h2>
+            <div class="alerts-container" id="alertsContainer">
+                <div class="no-data">No alerts yet. Start the scanner to begin monitoring.</div>
+            </div>
+        </div>
+
+        <!-- Symbols Table -->
+        <div class="card" style="margin-top: 30px;">
+            <h2>📊 Tracked Symbols</h2>
+            <div id="symbolsContainer">
+                <div class="no-data">Start the scanner to see tracked symbols.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let refreshInterval;
+
+        // Load initial configuration
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config');
+                const config = await response.json();
+
+                if (!config.error) {
+                    document.getElementById('category').value = config.category;
+                    document.getElementById('timeframe').value = config.timeframe_hours;
+                    document.getElementById('threshold').value = config.volume_increase_threshold;
+                    document.getElementById('interval').value = config.check_interval_seconds;
+                    document.getElementById('trackedSymbols').textContent = config.tracked_symbols;
+                }
+            } catch (error) {
+                console.error('Error loading config:', error);
+            }
+        }
+
+        // Start scanner
+        async function startScanner() {
+            const config = {
+                category: document.getElementById('category').value,
+                timeframe_hours: parseInt(document.getElementById('timeframe').value),
+                volume_increase_threshold: parseFloat(document.getElementById('threshold').value),
+                check_interval_seconds: parseInt(document.getElementById('interval').value)
+            };
+
+            try {
+                const response = await fetch('/api/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+
+                const result = await response.json();
+                showMessage(result.message, result.status === 'success' ? 'success' : 'info');
+
+                if (result.status === 'success') {
+                    startRefreshing();
+                }
+            } catch (error) {
+                showMessage('Error starting scanner: ' + error.message, 'error');
+            }
+        }
+
+        // Stop scanner
+        async function stopScanner() {
+            try {
+                const response = await fetch('/api/stop', { method: 'POST' });
+                const result = await response.json();
+                showMessage(result.message, 'success');
+                stopRefreshing();
+            } catch (error) {
+                showMessage('Error stopping scanner: ' + error.message, 'error');
+            }
+        }
+
+        // Reset data
+        async function resetData() {
+            if (!confirm('Are you sure you want to reset all volume history data?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/reset', { method: 'POST' });
+                const result = await response.json();
+                showMessage(result.message, 'success');
+                updateStatus();
+                updateAlerts();
+                updateSymbols();
+            } catch (error) {
+                showMessage('Error resetting data: ' + error.message, 'error');
+            }
+        }
+
+        // Update status
+        async function updateStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const status = await response.json();
+
+                const statusText = status.is_running ? 'Running' : 'Stopped';
+                const indicator = document.getElementById('statusIndicator');
+
+                document.getElementById('scannerStatus').textContent = statusText;
+                indicator.className = 'status-indicator ' + (status.is_running ? 'running' : 'stopped');
+
+                if (status.last_scan_time) {
+                    const lastScan = new Date(status.last_scan_time);
+                    document.getElementById('lastScan').textContent = lastScan.toLocaleTimeString();
+                }
+
+                // Load config to get tracked symbols count
+                loadConfig();
+            } catch (error) {
+                console.error('Error updating status:', error);
+            }
+        }
+
+        // Update alerts
+        async function updateAlerts() {
+            try {
+                const response = await fetch('/api/alerts');
+                const data = await response.json();
+
+                document.getElementById('alertsCount').textContent = data.count;
+
+                const container = document.getElementById('alertsContainer');
+
+                if (data.alerts.length === 0) {
+                    container.innerHTML = '<div class="no-data">No alerts detected yet.</div>';
+                    return;
+                }
+
+                container.innerHTML = data.alerts.map(alert => `
+                    <div class="alert-item">
+                        <div class="alert-header">
+                            <span class="alert-symbol">${alert.symbol}</span>
+                            <span class="alert-change">+${alert.volume_change_pct.toFixed(2)}%</span>
+                        </div>
+                        <div class="alert-details">
+                            <div>Current Volume: <strong>${alert.current_volume.toFixed(2)}</strong></div>
+                            <div>Avg Volume: <strong>${alert.avg_volume.toFixed(2)}</strong></div>
+                            <div>Current Price: <strong>${alert.last_price}</strong></div>
+                            <div>Price Change 24h: <strong>${(parseFloat(alert.price_change_24h) * 100).toFixed(2)}%</strong></div>
+                        </div>
+                        <div class="alert-time">${new Date(alert.timestamp).toLocaleString()}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error updating alerts:', error);
+            }
+        }
+
+        // Update symbols table
+        async function updateSymbols() {
+            try {
+                const response = await fetch('/api/all-symbols');
+                const data = await response.json();
+
+                const container = document.getElementById('symbolsContainer');
+
+                if (data.error || data.symbols.length === 0) {
+                    container.innerHTML = '<div class="no-data">No symbols tracked yet.</div>';
+                    return;
+                }
+
+                const topSymbols = data.symbols.slice(0, 20);
+
+                container.innerHTML = `
+                    <table class="symbols-table">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Current Volume</th>
+                                <th>Avg Volume</th>
+                                <th>Change</th>
+                                <th>Data Points</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${topSymbols.map(s => {
+                    const change = s.avg_volume ? ((s.current_volume - s.avg_volume) / s.avg_volume * 100) : 0;
+                    const changeColor = change >= 0 ? '#10b981' : '#ef4444';
+
+                    return `
+                                    <tr>
+                                        <td><strong>${s.symbol}</strong></td>
+                                        <td>${s.current_volume.toFixed(2)}</td>
+                                        <td>${s.avg_volume ? s.avg_volume.toFixed(2) : 'N/A'}</td>
+                                        <td style="color: ${changeColor}; font-weight: 600;">
+                                            ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
+                                        </td>
+                                        <td>${s.data_points}</td>
+                                    </tr>
+                                `;
+                }).join('')}
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 15px; text-align: center; color: #666; font-size: 0.9em;">
+                        Showing top 20 of ${data.total} tracked symbols
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error updating symbols:', error);
+            }
+        }
+
+        // Show message
+        function showMessage(message, type = 'info') {
+            const container = document.getElementById('configMessage');
+            container.innerHTML = `<div class="message ${type}">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        // Start/stop refreshing
+        function startRefreshing() {
+            if (refreshInterval) return;
+
+            refreshInterval = setInterval(() => {
+                updateStatus();
+                updateAlerts();
+                updateSymbols();
+            }, 3000);
+
+            // Initial update
+            updateStatus();
+            updateAlerts();
+            updateSymbols();
+        }
+
+        function stopRefreshing() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+            updateStatus();
+            updateAlerts();
+            updateSymbols();
+        }
+
+        // Initialize
+        loadConfig();
+        updateStatus();
+        updateAlerts();
+    </script>
+</body>
+
+</html>

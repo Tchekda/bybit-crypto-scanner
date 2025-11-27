@@ -1,0 +1,21 @@
+# Docker Compose configuration for Bybit Volume Scanner
+version: '3.8'
+
+services:
+  bybit-scanner:
+    build: .
+    container_name: bybit-volume-scanner
+    ports:
+      - "5000:5000"
+    volumes:
+      # Persist volume data
+      - ./data:/app/data
+    environment:
+      - DATA_FILE=/app/data/volume_data.json
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

@@ -1,0 +1,5 @@
+# Ignore data directory (for docker-compose volume mount)
+data/
+
+# Volume data backup
+*.json.bak
